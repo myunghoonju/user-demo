@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: user-demo
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/user_demo?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    show-sql: false
+
+  redis:
+    sentinel:
+      master: mymaster
+      nodes: ${REDIS_SENTINEL_NODES:localhost:26379,localhost:26380,localhost:26381}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+jwt:
+  secret: ${JWT_SECRET:user-demo-secret-key-must-be-at-least-32-bytes!!}
+  access-token-minutes: 15
+  refresh-token-minutes: 10080
+
+encryption:
+  secret-key: ${ENCRYPTION_KEY:0123456789abcdef0123456789abcdef}

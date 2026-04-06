@@ -1,0 +1,289 @@
+{
+  "info": {
+    "name": "user-demo API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "회원 서비스 API 테스트 (api-test.sh 동일 순서)\n\nLocalDataSeeder 계정:\n- USER: user1@example.com / UserPassword1!\n- ADMIN: admin@example.com / AdminPassword1!\n\n사용법:\n1. 회원가입 또는 user1@example.com으로 로그인\n2. 응답의 accessToken/refreshToken을 이후 요청에 직접 붙여넣기"
+  },
+  "item": [
+    {
+      "name": "1. 회원가입",
+      "item": [
+        {
+          "name": "POST /auth/signup → 202",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"Password1!\",\n  \"name\": \"홍길동\",\n  \"phoneNumber\": \"01012345678\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/auth/signup", "host": ["http://localhost:8080"], "path": ["api","v1","auth","signup"] },
+            "description": "비동기 처리 — 202 Accepted. Consumer 처리까지 1~2초 대기 후 로그인 가능."
+          }
+        },
+        {
+          "name": "POST /auth/signup (중복 이메일) → 202",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"Password1!\",\n  \"name\": \"홍길동\",\n  \"phoneNumber\": \"01012345678\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/auth/signup", "host": ["http://localhost:8080"], "path": ["api","v1","auth","signup"] },
+            "description": "중복 이메일도 202 — Consumer가 처리 시 중복 감지 후 DLQ 라우팅."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. 로그인",
+      "item": [
+        {
+          "name": "POST /auth/login → 200",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"UserPassword1!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/auth/login", "host": ["http://localhost:8080"], "path": ["api","v1","auth","login"] },
+            "description": "응답의 accessToken, refreshToken 복사 → 이후 요청 Authorization 헤더에 사용."
+          }
+        },
+        {
+          "name": "POST /auth/login (잘못된 비밀번호) → 401",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"WrongPassword!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/auth/login", "host": ["http://localhost:8080"], "path": ["api","v1","auth","login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. 본인 정보 조회/수정",
+      "item": [
+        {
+          "name": "GET /members/me → 200",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <accessToken>" }],
+            "url": { "raw": "http://localhost:8080/api/v1/members/me", "host": ["http://localhost:8080"], "path": ["api","v1","members","me"] },
+            "description": "<accessToken> 자리에 로그인 응답의 accessToken 붙여넣기"
+          }
+        },
+        {
+          "name": "GET /members/me (토큰 없음) → 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://localhost:8080/api/v1/members/me", "host": ["http://localhost:8080"], "path": ["api","v1","members","me"] }
+          }
+        },
+        {
+          "name": "PUT /members/me → 204",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <accessToken>" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"홍길순\",\n  \"phoneNumber\": \"01098765432\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/members/me", "host": ["http://localhost:8080"], "path": ["api","v1","members","me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Access Token 재발급",
+      "item": [
+        {
+          "name": "POST /auth/refresh → 200",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"<refreshToken>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/auth/refresh", "host": ["http://localhost:8080"], "path": ["api","v1","auth","refresh"] },
+            "description": "⚠ Refresh token rotation — 한 번 사용하면 무효화. 동일 토큰 재호출 시 401."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. 관리자 인가 검증 (USER 권한)",
+      "item": [
+        {
+          "name": "GET /admin/members (USER 토큰) → 403",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <accessToken>" }],
+            "url": { "raw": "http://localhost:8080/api/v1/admin/members", "host": ["http://localhost:8080"], "path": ["api","v1","admin","members"] },
+            "description": "USER 역할 accessToken으로 접근 시 403 Forbidden."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. 관리자 로그인",
+      "item": [
+        {
+          "name": "POST /auth/login (ADMIN) → 200",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"AdminPassword1!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/auth/login", "host": ["http://localhost:8080"], "path": ["api","v1","auth","login"] },
+            "description": "응답의 accessToken → 이후 관리자 API에 사용 (adminAccessToken)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. 관리자 API",
+      "item": [
+        {
+          "name": "GET /admin/members → 200",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <adminAccessToken>" }],
+            "url": { "raw": "http://localhost:8080/api/v1/admin/members", "host": ["http://localhost:8080"], "path": ["api","v1","admin","members"] }
+          }
+        },
+        {
+          "name": "GET /admin/members?name=홍 → 200",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <adminAccessToken>" }],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/members?name=홍",
+              "host": ["http://localhost:8080"],
+              "path": ["api","v1","admin","members"],
+              "query": [{ "key": "name", "value": "홍" }]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/members/:memberId → 200",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <adminAccessToken>" }],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/members/1",
+              "host": ["http://localhost:8080"],
+              "path": ["api","v1","admin","members","1"]
+            },
+            "description": "memberId를 실제 존재하는 ID로 변경"
+          }
+        },
+        {
+          "name": "GET /admin/members/99999 (없는 회원) → 404",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <adminAccessToken>" }],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/admin/members/99999",
+              "host": ["http://localhost:8080"],
+              "path": ["api","v1","admin","members","99999"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. 로그아웃",
+      "item": [
+        {
+          "name": "POST /auth/logout → 204",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer <accessToken>" }],
+            "url": { "raw": "http://localhost:8080/api/v1/auth/logout", "host": ["http://localhost:8080"], "path": ["api","v1","auth","logout"] },
+            "description": "accessToken이 Redis 블랙리스트에 등록됨."
+          }
+        },
+        {
+          "name": "GET /members/me (로그아웃 후) → 401",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <accessToken>" }],
+            "url": { "raw": "http://localhost:8080/api/v1/members/me", "host": ["http://localhost:8080"], "path": ["api","v1","members","me"] },
+            "description": "블랙리스트된 토큰 → 401"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. 회원 탈퇴",
+      "item": [
+        {
+          "name": "POST /auth/login (재로그인) → 200",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"UserPassword1!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/auth/login", "host": ["http://localhost:8080"], "path": ["api","v1","auth","login"] },
+            "description": "로그아웃 후 새 토큰 발급 → newAccessToken으로 사용"
+          }
+        },
+        {
+          "name": "DELETE /members/me → 204",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer <newAccessToken>" }],
+            "url": { "raw": "http://localhost:8080/api/v1/members/me", "host": ["http://localhost:8080"], "path": ["api","v1","members","me"] },
+            "description": "재로그인 응답의 accessToken 사용"
+          }
+        },
+        {
+          "name": "GET /members/me (탈퇴 후) → 401",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer <newAccessToken>" }],
+            "url": { "raw": "http://localhost:8080/api/v1/members/me", "host": ["http://localhost:8080"], "path": ["api","v1","members","me"] },
+            "description": "탈퇴 후 토큰 무효화 → 401"
+          }
+        },
+        {
+          "name": "POST /auth/login (탈퇴 후 재로그인) → 401",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"UserPassword1!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "http://localhost:8080/api/v1/auth/login", "host": ["http://localhost:8080"], "path": ["api","v1","auth","login"] },
+            "description": "탈퇴된 계정 로그인 시도 → 401"
+          }
+        }
+      ]
+    }
+  ]
+}

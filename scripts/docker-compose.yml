@@ -1,0 +1,83 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.9.11-management-alpine
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+  redis-master:
+    image: redis:7.2-alpine
+    container_name: redis-master
+    ports:
+      - 6379:6379
+    command: redis-server --appendonly yes
+
+  redis-replica:
+    image: redis:7.2-alpine
+    container_name: redis-replica
+    ports:
+      - 6380:6380
+    command: redis-server --port 6380 --replicaof redis-master 6379 --appendonly yes
+    depends_on:
+      - redis-master
+
+  redis-sentinel-1:
+    image: redis:7.2-alpine
+    container_name: redis-sentinel-1
+    ports:
+      - 26379:26379
+    command:
+      - sh
+      - -c
+      - |
+        echo 'port 26379' > /tmp/sentinel.conf
+        echo 'sentinel resolve-hostnames yes' >> /tmp/sentinel.conf
+        echo 'sentinel monitor mymaster redis-master 6379 2' >> /tmp/sentinel.conf
+        echo 'sentinel down-after-milliseconds mymaster 5000' >> /tmp/sentinel.conf
+        echo 'sentinel failover-timeout mymaster 60000' >> /tmp/sentinel.conf
+        echo 'sentinel parallel-syncs mymaster 1' >> /tmp/sentinel.conf
+        redis-sentinel /tmp/sentinel.conf
+    depends_on:
+      - redis-master
+      - redis-replica
+
+  redis-sentinel-2:
+    image: redis:7.2-alpine
+    container_name: redis-sentinel-2
+    ports:
+      - 26380:26380
+    command:
+      - sh
+      - -c
+      - |
+        echo 'port 26380' > /tmp/sentinel.conf
+        echo 'sentinel resolve-hostnames yes' >> /tmp/sentinel.conf
+        echo 'sentinel monitor mymaster redis-master 6379 2' >> /tmp/sentinel.conf
+        echo 'sentinel down-after-milliseconds mymaster 5000' >> /tmp/sentinel.conf
+        echo 'sentinel failover-timeout mymaster 60000' >> /tmp/sentinel.conf
+        echo 'sentinel parallel-syncs mymaster 1' >> /tmp/sentinel.conf
+        redis-sentinel /tmp/sentinel.conf
+    depends_on:
+      - redis-master
+      - redis-replica
+
+  redis-sentinel-3:
+    image: redis:7.2-alpine
+    container_name: redis-sentinel-3
+    ports:
+      - 26381:26381
+    command:
+      - sh
+      - -c
+      - |
+        echo 'port 26381' > /tmp/sentinel.conf
+        echo 'sentinel resolve-hostnames yes' >> /tmp/sentinel.conf
+        echo 'sentinel monitor mymaster redis-master 6379 2' >> /tmp/sentinel.conf
+        echo 'sentinel down-after-milliseconds mymaster 5000' >> /tmp/sentinel.conf
+        echo 'sentinel failover-timeout mymaster 60000' >> /tmp/sentinel.conf
+        echo 'sentinel parallel-syncs mymaster 1' >> /tmp/sentinel.conf
+        redis-sentinel /tmp/sentinel.conf
+    depends_on:
+      - redis-master
+      - redis-replica
