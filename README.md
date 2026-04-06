@@ -90,5 +90,5 @@ Postman 또는 HTTPie Desktop에서 import하여 사용
 
 ## 주요 설계 결정
 
-설계 과정: [`docs/decisions.md`](docs/DECISIONS.md)  
+설계 과정: [`docs/decisions.md`](docs/decisions.md)  
 전체 아키텍처: [`docs/architecture.md`](docs/architecture.md)
